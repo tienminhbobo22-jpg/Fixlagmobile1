@@ -1,0 +1,272 @@
+--========================================================
+-- MrDon ANTI-LAG V61 (UI FIX + SILENT AIM PLAYERS + WATER PLATFORM + SPEED/JUMP)
+--========================================================
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+local SoundService = game:GetService("SoundService")
+local player = Players.LocalPlayer
+
+-- Chống trùng lặp UI cũ
+pcall(function()
+	if player.PlayerGui:FindFirstChild("MrDonV61") then
+		player.PlayerGui.MrDonV61:Destroy()
+	end
+end)
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "MrDonV61"
+gui.ResetOnSpawn = false
+gui.Parent = player:WaitForChild("PlayerGui")
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 240, 0, 410)
+frame.Position = UDim2.new(0.5, -120, 0.15, 0)
+frame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+frame.Active = true
+frame.Draggable = true
+frame.Parent = gui
+Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 8)
+
+-- Header với nút Đóng (×) và Thu nhỏ (-)
+local header = Instance.new("Frame")
+header.Size = UDim2.new(1, 0, 0, 32)
+header.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+header.Parent = frame
+Instance.new("UICorner", header).CornerRadius = UDim.new(0, 8)
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, -60, 1, 0)
+title.Position = UDim2.fromOffset(8, 0)
+title.BackgroundTransparency = 1
+title.Text = "⚡ MrDon V61: PLAYER SILENT AIM"
+title.TextColor3 = Color3.fromRGB(0, 255, 150)
+title.Font = Enum.Font.GothamBold
+title.TextSize = 10
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.Parent = header
+
+local closeBtn = Instance.new("TextButton")
+closeBtn.Size = UDim2.fromOffset(22, 22)
+closeBtn.Position = UDim2.new(1, -26, 0, 5)
+closeBtn.BackgroundColor3 = Color3.fromRGB(200, 40, 40)
+closeBtn.Text = "×"
+closeBtn.TextColor3 = Color3.new(1, 1, 1)
+closeBtn.Font = Enum.Font.GothamBold
+closeBtn.Parent = header
+Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 4)
+
+local minimized = false
+local minBtn = Instance.new("TextButton")
+minBtn.Size = UDim2.fromOffset(22, 22)
+minBtn.Position = UDim2.new(1, -52, 0, 5)
+minBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+minBtn.Text = "-"
+minBtn.TextColor3 = Color3.new(1, 1, 1)
+minBtn.Font = Enum.Font.GothamBold
+minBtn.Parent = header
+Instance.new("UICorner", minBtn).CornerRadius = UDim.new(0, 4)
+
+local container = Instance.new("ScrollingFrame")
+container.Size = UDim2.new(1, 0, 1, -36)
+container.Position = UDim2.fromOffset(0, 36)
+container.BackgroundTransparency = 1
+container.CanvasSize = UDim2.new(0, 0, 0, 400)
+container.ScrollBarThickness = 4
+container.Parent = frame
+
+minBtn.MouseButton1Click:Connect(function()
+	minimized = not minimized
+	container.Visible = not minimized
+	frame.Size = minimized and UDim2.new(0, 240, 0, 32) or UDim2.new(0, 240, 0, 410)
+	minBtn.Text = minimized and "+" or "-"
+end)
+
+closeBtn.MouseButton1Click:Connect(function()
+	gui:Destroy()
+end)
+
+local function createToggle(name, yPos, callback)
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.new(1, -16, 0, 28)
+	btn.Position = UDim2.new(0, 8, 0, yPos)
+	btn.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+	btn.Text = name .. ": OFF"
+	btn.TextColor3 = Color3.new(1, 1, 1)
+	btn.Font = Enum.Font.GothamSemibold
+	btn.TextSize = 10
+	btn.Parent = container
+	Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+	
+	local state = false
+	btn.MouseButton1Click:Connect(function()
+		state = not state
+		btn.BackgroundColor3 = state and Color3.fromRGB(0, 130, 90) or Color3.fromRGB(40, 40, 50)
+		btn.Text = name .. (state and ": ON" or ": OFF")
+		callback(state)
+	end)
+end
+
+local isCleanAll = false
+local isSilentAim = false
+local isNoclip = false
+local isWaterPlatform = false
+local isSpeed = false
+local isJumpBoost = false
+
+local speedVal = 50
+local jumpVal = 100
+
+createToggle("XÓA EFFECT & MUTE ÂM THANH", 8, function(state) isCleanAll = state end)
+createToggle("SILENT AIM (KHÓA NGƯỜI CHƠI)", 42, function(state) isSilentAim = state end)
+createToggle("XUYÊN TƯỜNG (NOCLIP)", 76, function(state) isNoclip = state end)
+createToggle("ĐI TRÊN NƯỚC (LỚP ĐẤT ẢO)", 110, function(state) isWaterPlatform = state end)
+createToggle("TĂNG TỐC CHẠY (SPEED)", 144, function(state) isSpeed = state end)
+createToggle("TĂNG ĐỘ NHẢY (JUMP BOOST)", 178, function(state) isJumpBoost = state end)
+
+local speedBox = Instance.new("TextBox")
+speedBox.Size = UDim2.new(1, -16, 0, 26)
+speedBox.Position = UDim2.new(0, 8, 0, 212)
+speedBox.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+speedBox.Text = "Speed: 50"
+speedBox.TextColor3 = Color3.new(1, 1, 1)
+speedBox.Font = Enum.Font.Gotham
+speedBox.TextSize = 10
+speedBox.Parent = container
+Instance.new("UICorner", speedBox).CornerRadius = UDim.new(0, 6)
+
+speedBox.FocusLost:Connect(function()
+	local num = tonumber(speedBox.Text)
+	if num then speedVal = num speedBox.Text = "Speed: " .. num else speedBox.Text = "Speed: " .. speedVal end
+end)
+
+local jumpBox = Instance.new("TextBox")
+jumpBox.Size = UDim2.new(1, -16, 0, 26)
+jumpBox.Position = UDim2.new(0, 8, 0, 246)
+jumpBox.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+jumpBox.Text = "Jump: 100"
+jumpBox.TextColor3 = Color3.new(1, 1, 1)
+jumpBox.Font = Enum.Font.Gotham
+jumpBox.TextSize = 10
+jumpBox.Parent = container
+Instance.new("UICorner", jumpBox).CornerRadius = UDim.new(0, 6)
+
+jumpBox.FocusLost:Connect(function()
+	local num = tonumber(jumpBox.Text)
+	if num then jumpVal = num jumpBox.Text = "Jump: " .. num else jumpBox.Text = "Jump: " .. jumpVal end
+end)
+
+-- 1. XÓA EFFECT & MUTE ÂM THANH
+local function wipeItem(v)
+	if isCleanAll then
+		if v:IsA("Sound") then
+			pcall(function() v.SoundId = "" v.Volume = 0 v:Stop() end)
+		elseif v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Beam") or v:IsA("Fire") or v:IsA("Smoke") then
+			pcall(function() v:Destroy() end)
+		end
+	end
+end
+
+task.spawn(function()
+	while task.wait(1) do
+		if isCleanAll then
+			SoundService.Volume = 0
+			for _, v in ipairs(Workspace:GetDescendants()) do wipeItem(v) end
+		end
+	end
+end)
+Workspace.DescendantAdded:Connect(function(v) wipeItem(v) end)
+
+-- 2. TẠO LỚP ĐẤT ẢO (WATER PLATFORM) DƯỚI CHÂN KHI ĐI TRÊN NƯỚC
+local waterPart = Instance.new("Part")
+waterPart.Size = Vector3.new(14, 1, 14)
+waterPart.Anchored = true
+waterPart.Transparency = 1
+waterPart.CanCollide = false
+waterPart.Name = "MrDonWaterPlatform"
+waterPart.Parent = Workspace
+
+RunService.RenderStepped:Connect(function()
+	pcall(function()
+		if isWaterPlatform and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+			local hrp = player.Character.HumanoidRootPart
+			waterPart.CanCollide = true
+			waterPart.Position = Vector3.new(hrp.Position.X, hrp.Position.Y - 3.5, hrp.Position.Z)
+		else
+			waterPart.CanCollide = false
+			waterPart.Position = Vector3.new(0, -500, 0)
+		end
+	end)
+end)
+
+-- 3. SILENT AIM KHÓA NGƯỜI CHƠI (PLAYERS)
+local function getNearestPlayer()
+	local char = player.Character
+	if not char or not char:FindFirstChild("HumanoidRootPart") then return nil end
+	local nearest, shortest = nil, math.huge
+	for _, p in ipairs(Players:GetPlayers()) do
+		if p ~= player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") and p.Character:FindFirstChildOfClass("Humanoid") then
+			local hum = p.Character.Humanoid
+			if hum.Health > 0 then
+				local hrp = p.Character.HumanoidRootPart
+				local dist = (hrp.Position - char.HumanoidRootPart.Position).Magnitude
+				if dist < shortest then
+					shortest = dist
+					nearest = hrp
+				end
+			end
+		end
+	end
+	return nearest
+end
+
+pcall(function()
+	local mt = getrawmetatable(game)
+	if mt and mt.__namecall then
+		setreadonly(mt, false)
+		local old = mt.__namecall
+		mt.__namecall = newcclosure(function(self, ...)
+			local args = {...}
+			local method = getnamecallmethod()
+			if isSilentAim and method == "FireServer" then
+				if self.Name == "Shoot" or self.Name == "Skill" or self.Name == "Validator" or self.Name:lower():find("attack") then
+					local target = getNearestPlayer()
+					if target then
+						for i, v in ipairs(args) do
+							if typeof(v) == "Vector3" then args[i] = target.Position
+							elseif typeof(v) == "CFrame" then args[i] = CFrame.new(target.Position) end
+						end
+					end
+				end
+			end
+			return old(self, unpack(args))
+		end)
+		setreadonly(mt, true)
+	end
+end)
+
+-- 4. VÒNG LẶP SPEED, JUMP, NOCLIP
+RunService.RenderStepped:Connect(function()
+	pcall(function()
+		local char = player.Character
+		if char then
+			local hum = char:FindFirstChildOfClass("Humanoid")
+			
+			if isSpeed and hum then
+				hum.WalkSpeed = speedVal
+			end
+			
+			if isJumpBoost and hum then
+				hum.UseJumpPower = true
+				hum.JumpPower = jumpVal
+			end
+			
+			if isNoclip then
+				for _, v in ipairs(char:GetDescendants()) do
+					if v:IsA("BasePart") then v.CanCollide = false end
+				end
+			end
+		end
+	end)
+end)
