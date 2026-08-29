@@ -1,28 +1,25 @@
 --========================================================
--- MrDon PURE ANTI-LAG V61 (FIXED MOB/PLAYER DELETION)
+-- MrDon PURE ANTI-LAG V89 (0.1S DELAY & KEEP 40% SKILL FX)
 --========================================================
 
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
-local SoundService = game:GetService("SoundService")
 local Lighting = game:GetService("Lighting")
 local player = Players.LocalPlayer
 
--- Chống trùng lặp UI cũ
 pcall(function()
-	if player.PlayerGui:FindFirstChild("MrDonV61") then
-		player.PlayerGui.MrDonV61:Destroy()
+	if player.PlayerGui:FindFirstChild("MrDonV89") then
+		player.PlayerGui.MrDonV89:Destroy()
 	end
 end)
 
 local gui = Instance.new("ScreenGui")
-gui.Name = "MrDonV61"
+gui.Name = "MrDonV89"
 gui.ResetOnSpawn = false
 gui.Parent = player:WaitForChild("PlayerGui")
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 240, 0, 180)
+frame.Size = UDim2.new(0, 240, 0, 185)
 frame.Position = UDim2.new(0.5, -120, 0.15, 0)
 frame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
 frame.Active = true
@@ -30,7 +27,6 @@ frame.Draggable = true
 frame.Parent = gui
 Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 8)
 
--- Header với nút Đóng (×) và Thu nhỏ (-)
 local header = Instance.new("Frame")
 header.Size = UDim2.new(1, 0, 0, 32)
 header.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
@@ -41,7 +37,7 @@ local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, -60, 1, 0)
 title.Position = UDim2.fromOffset(8, 0)
 title.BackgroundTransparency = 1
-title.Text = "⚡ MrDon PURE ANTI-LAG"
+title.Text = "⚡ MrDon ANTI-LAG V89"
 title.TextColor3 = Color3.fromRGB(0, 255, 150)
 title.Font = Enum.Font.GothamBold
 title.TextSize = 10
@@ -58,7 +54,10 @@ closeBtn.Font = Enum.Font.GothamBold
 closeBtn.Parent = header
 Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 4)
 
-local minimized = false
+closeBtn.MouseButton1Click:Connect(function() gui:Destroy() end)
+
+-- Nút thu gọn (-) menu
+local isMinimized = false
 local minBtn = Instance.new("TextButton")
 minBtn.Size = UDim2.fromOffset(22, 22)
 minBtn.Position = UDim2.new(1, -52, 0, 5)
@@ -73,24 +72,20 @@ local container = Instance.new("ScrollingFrame")
 container.Size = UDim2.new(1, 0, 1, -36)
 container.Position = UDim2.fromOffset(0, 36)
 container.BackgroundTransparency = 1
-container.CanvasSize = UDim2.new(0, 0, 0, 140)
+container.CanvasSize = UDim2.new(0, 0, 0, 130)
 container.ScrollBarThickness = 4
 container.Parent = frame
 
 minBtn.MouseButton1Click:Connect(function()
-	minimized = not minimized
-	container.Visible = not minimized
-	frame.Size = minimized and UDim2.new(0, 240, 0, 32) or UDim2.new(0, 240, 0, 180)
-	minBtn.Text = minimized and "+" or "-"
-end)
-
-closeBtn.MouseButton1Click:Connect(function()
-	gui:Destroy()
+	isMinimized = not isMinimized
+	container.Visible = not isMinimized
+	frame.Size = isMinimized and UDim2.new(0, 240, 0, 32) or UDim2.new(0, 240, 0, 185)
+	minBtn.Text = isMinimized and "+" or "-"
 end)
 
 local function createToggle(name, yPos, callback)
 	local btn = Instance.new("TextButton")
-	btn.Size = UDim2.new(1, -16, 0, 28)
+	btn.Size = UDim2.new(1, -16, 0, 32)
 	btn.Position = UDim2.new(0, 8, 0, yPos)
 	btn.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
 	btn.Text = name .. ": OFF"
@@ -109,113 +104,102 @@ local function createToggle(name, yPos, callback)
 	end)
 end
 
-local isEffectClean = false
-local isPotatoGraph = false
-local isMuteSound = false
+local safeConnection = nil
 
-local function applyPotatoGraphics()
-	pcall(function()
-		Lighting.GlobalShadows = false
-		Lighting.FogEnd = 9e9
-		Lighting.Brightness = 1
-		for _, v in ipairs(Lighting:GetDescendants()) do
-			if v:IsA("Sky") or v:IsA("Atmosphere") or v:IsA("Clouds") or v:IsA("PostEffect") or v:IsA("SunRaysEffect") or v:IsA("BlurEffect") or v:IsA("BloomEffect") or v:IsA("ColorCorrectionEffect") then
-				v:Destroy()
-			end
-		end
-		Workspace.Terrain.WaterWaveSize = 0
-		Workspace.Terrain.WaterWaveSpeed = 0
-		Workspace.Terrain.WaterReflectance = 0
-		
-		for _, v in ipairs(Workspace:GetDescendants()) do
-			if v:IsA("BasePart") then
-				v.CastShadow = false
-			end
-		end
-	end)
-end
-
-createToggle("POTATO GRAPHICS (FIX LAG SPIKE)", 8, function(state)
-	isPotatoGraph = state
-	if state then applyPotatoGraphics() end
-end)
-
-createToggle("-60% EFFECT & DỌN RÁC (SIÊU TỐC)", 42, function(state) 
-	isEffectClean = state 
-end)
-
-createToggle("MUTE ÂM THANH", 76, function(state) 
-	isMuteSound = state 
-	SoundService.Volume = state and 0 or 1
-	for _, s in ipairs(Workspace:GetDescendants()) do
-		if s:IsA("Sound") then s.Volume = state and 0 or 1 end
-	end
-end)
-
-math.randomseed(tick())
-
--- HÀM BẢO VỆ TUYỆT ĐỐI: DÒ NGƯỢC LÊN XEM CÓ DÍNH PLAYER HAY QUÁI (NPC CÓ HUMANOID) KHÔNG
-local function isProtected(v)
-	local current = v
-	while current and current ~= Workspace and current ~= game do
-		if current:FindFirstChildOfClass("Humanoid") then
-			return true
-		end
-		for _, p in ipairs(Players:GetPlayers()) do
-			if current == p.Character or current == p.Backpack then
+createToggle("AUTO DIỆT ĐẤT/CÂY & TỈA 60% FX (0.1s)", 8, function(state)
+	if state then
+		local function isProtected(v)
+			if not v or not v.Parent then return true end
+			if player.Character and (v == player.Character or v:IsDescendantOf(player.Character)) then
 				return true
 			end
-		end
-		current = current.Parent
-	end
-	return false
-end
-
-local lingeringParts = {}
-
-Workspace.DescendantAdded:Connect(function(v)
-	pcall(function()
-		if isPotatoGraph and v:IsA("BasePart") then
-			v.CastShadow = false
+			if v:IsA("Tool") or v:FindFirstAncestorOfClass("Tool") then
+				return true
+			end
+			local model = v:FindFirstAncestorOfClass("Model")
+			if model then
+				if model:FindFirstChildOfClass("Humanoid") or Players:GetPlayerFromCharacter(model) then
+					return true
+				end
+			end
+			return false
 		end
 
-		if isProtected(v) then return end
-		
-		if isMuteSound and v:IsA("Sound") then
-			v.Volume = 0
-		end
-		
-		if isEffectClean then
-			if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Beam") or v:IsA("Fire") or v:IsA("Smoke") or v:IsA("Sparkles") then
-				if math.random() <= 0.6 then
+		local function checkAndDestroy(v)
+			if isProtected(v) then return end
+			if v == Workspace.Terrain then return end
+
+			if v:IsA("Model") then
+				local mName = v.Name:lower()
+				local isTreeModel = mName:find("tree") or mName:find("wood") or mName:find("trunk") or mName:find("branch") or mName:find("leaf") or mName:find("leaves") or mName:find("stump") or mName:find("log") or mName:find("plant") or mName:find("bush") or mName:find("foliage")
+				local isFruitOrChest = mName:find("fruit") or mName:find("chest")
+				
+				if isTreeModel and not isFruitOrChest then
+					v:Destroy()
+					return
+				end
+			elseif v:IsA("BasePart") then
+				local name = v.Name:lower()
+				local parentName = v.Parent and v.Parent.Name:lower() or ""
+				local ancestorModel = v:FindFirstAncestorOfClass("Model")
+				local modelName = ancestorModel and ancestorModel.Name:lower() or ""
+				
+				local isDebrisOrTree = name:find("rock") or name:find("stone") or name:find("debris") or name:find("chunk") or name:find("earth") or name:find("ground") or name:find("rubble") or name:find("shard") or name:find("tree") or name:find("wood") or name:find("trunk") or name:find("branch") or name:find("leaf") or name:find("leaves") or name:find("stump") or name:find("log") or name:find("plant") or name:find("bush") or parentName:find("debris") or parentName:find("rock") or parentName:find("stone") or parentName:find("tree") or modelName:find("tree") or modelName:find("wood")
+				
+				local isFruitOrChest = name:find("fruit") or name:find("chest") or modelName:find("fruit") or modelName:find("chest")
+				
+				if isDebrisOrTree and not isFruitOrChest then
 					v:Destroy()
 				end
-			elseif v:IsA("BasePart") and not v.Anchored then
-				v.CanCollide = false
-				v.CanTouch = false
-				v.CanQuery = false
-				lingeringParts[v] = {time = tick(), obj = v}
-			end
-		end
-	end)
-end)
-
-RunService.Heartbeat:Connect(function()
-	pcall(function()
-		if isMuteSound then SoundService.Volume = 0 end
-		
-		if isEffectClean then
-			local now = tick()
-			for obj, data in pairs(lingeringParts) do
-				if not obj or not obj.Parent then
-					lingeringParts[obj] = nil
-				else
-					if (now - data.time > 0.8) then
-						obj:Destroy()
-						lingeringParts[obj] = nil
-					end
+			elseif v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Beam") then
+				-- Tỉa 60% hiệu ứng rác, giữ lại 40% cho mượt chiêu thức
+				if math.random(1, 100) <= 60 then
+					v:Destroy()
 				end
 			end
 		end
-	end)
+
+		-- Quét dọn toàn bộ map ngay khi bật
+		pcall(function()
+			for _, v in ipairs(Workspace:GetDescendants()) do
+				checkAndDestroy(v)
+			end
+		end)
+
+		-- Lắng nghe với thời gian chờ 0.1s chuẩn xác để tóm gọn destruction mà không lọt sổ
+		safeConnection = Workspace.DescendantAdded:Connect(function(v)
+			task.spawn(function()
+				task.wait(0.1)
+				checkAndDestroy(v)
+			end)
+		end)
+	else
+		if safeConnection then
+			safeConnection:Disconnect()
+			safeConnection = nil
+		end
+	end
+end)
+
+createToggle("POTATO GRAPHICS (TẮT SẠCH BÓNG)", 48, function(state)
+	if state then
+		pcall(function()
+			Lighting.GlobalShadows = false
+			Lighting.FogEnd = 9e9
+			Lighting.Brightness = 1
+			for _, v in ipairs(Lighting:GetDescendants()) do
+				if v:IsA("Sky") or v:IsA("Atmosphere") or v:IsA("Clouds") or v:IsA("PostEffect") or v:IsA("SunRaysEffect") then
+					v:Destroy()
+				end
+			end
+			Workspace.Terrain.WaterWaveSize = 0
+			Workspace.Terrain.WaterWaveSpeed = 0
+			
+			for _, v in ipairs(Workspace:GetDescendants()) do
+				if v:IsA("BasePart") then
+					v.CastShadow = false
+				end
+			end
+		end)
+	end
 end)
