@@ -1,5 +1,5 @@
 --========================================================
--- MrDon ANTI-LAG V61 (SEPARATE TOGGLES + FAST EFFECT CLEANER)
+-- MrDon PURE ANTI-LAG V61 (FIXED MOB/PLAYER DELETION)
 --========================================================
 
 local Players = game:GetService("Players")
@@ -22,7 +22,7 @@ gui.ResetOnSpawn = false
 gui.Parent = player:WaitForChild("PlayerGui")
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 240, 0, 440)
+frame.Size = UDim2.new(0, 240, 0, 180)
 frame.Position = UDim2.new(0.5, -120, 0.15, 0)
 frame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
 frame.Active = true
@@ -41,7 +41,7 @@ local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, -60, 1, 0)
 title.Position = UDim2.fromOffset(8, 0)
 title.BackgroundTransparency = 1
-title.Text = "⚡ MrDon V61: SEPARATE TOGGLES"
+title.Text = "⚡ MrDon PURE ANTI-LAG"
 title.TextColor3 = Color3.fromRGB(0, 255, 150)
 title.Font = Enum.Font.GothamBold
 title.TextSize = 10
@@ -73,14 +73,14 @@ local container = Instance.new("ScrollingFrame")
 container.Size = UDim2.new(1, 0, 1, -36)
 container.Position = UDim2.fromOffset(0, 36)
 container.BackgroundTransparency = 1
-container.CanvasSize = UDim2.new(0, 0, 0, 430)
+container.CanvasSize = UDim2.new(0, 0, 0, 140)
 container.ScrollBarThickness = 4
 container.Parent = frame
 
 minBtn.MouseButton1Click:Connect(function()
 	minimized = not minimized
 	container.Visible = not minimized
-	frame.Size = minimized and UDim2.new(0, 240, 0, 32) or UDim2.new(0, 240, 0, 440)
+	frame.Size = minimized and UDim2.new(0, 240, 0, 32) or UDim2.new(0, 240, 0, 180)
 	minBtn.Text = minimized and "+" or "-"
 end)
 
@@ -109,35 +109,42 @@ local function createToggle(name, yPos, callback)
 	end)
 end
 
-local isHide60 = false
+local isEffectClean = false
+local isPotatoGraph = false
 local isMuteSound = false
-local isSilentAim = false
-local isNoclip = false
-local isWaterPlatform = false
-local isSpeed = false
-local isJumpBoost = false
 
-local speedVal = 50
-local jumpVal = 100
-
--- NÚT RIÊNG BIỆT 1: XOÁ 60% EFFECT & TỐI ƯU LIGHTING TRỜI XÁM
-createToggle("XOÁ 60% EFFECT", 8, function(state) 
-	isHide60 = state 
-	if state then
-		pcall(function()
-			Lighting.GlobalShadows = false
-			Lighting.FogEnd = 9e9
-			for _, v in ipairs(Lighting:GetChildren()) do
-				if v:IsA("Sky") or v:IsA("Atmosphere") or v:IsA("Clouds") or v:IsA("PostEffect") then
-					v:Destroy()
-				end
+local function applyPotatoGraphics()
+	pcall(function()
+		Lighting.GlobalShadows = false
+		Lighting.FogEnd = 9e9
+		Lighting.Brightness = 1
+		for _, v in ipairs(Lighting:GetDescendants()) do
+			if v:IsA("Sky") or v:IsA("Atmosphere") or v:IsA("Clouds") or v:IsA("PostEffect") or v:IsA("SunRaysEffect") or v:IsA("BlurEffect") or v:IsA("BloomEffect") or v:IsA("ColorCorrectionEffect") then
+				v:Destroy()
 			end
-		end)
-	end
+		end
+		Workspace.Terrain.WaterWaveSize = 0
+		Workspace.Terrain.WaterWaveSpeed = 0
+		Workspace.Terrain.WaterReflectance = 0
+		
+		for _, v in ipairs(Workspace:GetDescendants()) do
+			if v:IsA("BasePart") then
+				v.CastShadow = false
+			end
+		end
+	end)
+end
+
+createToggle("POTATO GRAPHICS (FIX LAG SPIKE)", 8, function(state)
+	isPotatoGraph = state
+	if state then applyPotatoGraphics() end
 end)
 
--- NÚT RIÊNG BIỆT 2: MUTE ÂM THANH
-createToggle("MUTE ÂM THANH", 42, function(state) 
+createToggle("-60% EFFECT & DỌN RÁC (SIÊU TỐC)", 42, function(state) 
+	isEffectClean = state 
+end)
+
+createToggle("MUTE ÂM THANH", 76, function(state) 
 	isMuteSound = state 
 	SoundService.Volume = state and 0 or 1
 	for _, s in ipairs(Workspace:GetDescendants()) do
@@ -145,75 +152,48 @@ createToggle("MUTE ÂM THANH", 42, function(state)
 	end
 end)
 
-createToggle("SILENT AIM (KHÓA NGƯỜI CHƠI)", 76, function(state) isSilentAim = state end)
-createToggle("XUYÊN TƯỜNG (NOCLIP)", 110, function(state) isNoclip = state end)
-createToggle("ĐI TRÊN NƯỚC (LỚP ĐẤT ẢO)", 144, function(state) isWaterPlatform = state end)
-createToggle("TĂNG TỐC CHẠY (SPEED)", 178, function(state) isSpeed = state end)
-createToggle("TĂNG ĐỘ NHẢY (JUMP BOOST)", 212, function(state) isJumpBoost = state end)
-
-local speedBox = Instance.new("TextBox")
-speedBox.Size = UDim2.new(1, -16, 0, 26)
-speedBox.Position = UDim2.new(0, 8, 0, 246)
-speedBox.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-speedBox.Text = "Speed: 50"
-speedBox.TextColor3 = Color3.new(1, 1, 1)
-speedBox.Font = Enum.Font.Gotham
-speedBox.TextSize = 10
-speedBox.Parent = container
-Instance.new("UICorner", speedBox).CornerRadius = UDim.new(0, 6)
-
-speedBox.FocusLost:Connect(function()
-	local num = tonumber(speedBox.Text)
-	if num then speedVal = num speedBox.Text = "Speed: " .. num else speedBox.Text = "Speed: " .. speedVal end
-end)
-
-local jumpBox = Instance.new("TextBox")
-jumpBox.Size = UDim2.new(1, -16, 0, 26)
-jumpBox.Position = UDim2.new(0, 8, 0, 280)
-jumpBox.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-jumpBox.Text = "Jump: 100"
-jumpBox.TextColor3 = Color3.new(1, 1, 1)
-jumpBox.Font = Enum.Font.Gotham
-jumpBox.TextSize = 10
-jumpBox.Parent = container
-Instance.new("UICorner", jumpBox).CornerRadius = UDim.new(0, 6)
-
-jumpBox.FocusLost:Connect(function()
-	local num = tonumber(jumpBox.Text)
-	if num then jumpVal = num jumpBox.Text = "Jump: " .. num else jumpBox.Text = "Jump: " .. jumpVal end
-end)
-
 math.randomseed(tick())
 
--- Kiểm tra an toàn không đụng vào nhân vật hoặc balo/vũ khí đang cầm
-local function isPlayerAsset(v)
-	for _, p in ipairs(Players:GetPlayers()) do
-		local char = p.Character
-		local bp = p.Backpack
-		if (char and (v == char or v:IsDescendantOf(char))) or (bp and (v == bp or v:IsDescendantOf(bp))) then
+-- HÀM BẢO VỆ TUYỆT ĐỐI: DÒ NGƯỢC LÊN XEM CÓ DÍNH PLAYER HAY QUÁI (NPC CÓ HUMANOID) KHÔNG
+local function isProtected(v)
+	local current = v
+	while current and current ~= Workspace and current ~= game do
+		if current:FindFirstChildOfClass("Humanoid") then
 			return true
 		end
+		for _, p in ipairs(Players:GetPlayers()) do
+			if current == p.Character or current == p.Backpack then
+				return true
+			end
+		end
+		current = current.Parent
 	end
 	return false
 end
 
--- HỆ THỐNG QUÉT RÁC HIỆU ỨNG TỒN ĐỌNG (SIÊU TỐC 0.8 GIÂY)
 local lingeringParts = {}
 
 Workspace.DescendantAdded:Connect(function(v)
 	pcall(function()
-		if isPlayerAsset(v) then return end
+		if isPotatoGraph and v:IsA("BasePart") then
+			v.CastShadow = false
+		end
+
+		if isProtected(v) then return end
 		
 		if isMuteSound and v:IsA("Sound") then
 			v.Volume = 0
 		end
 		
-		if isHide60 then
-			if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Beam") or v:IsA("Fire") or v:IsA("Smoke") then
+		if isEffectClean then
+			if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Beam") or v:IsA("Fire") or v:IsA("Smoke") or v:IsA("Sparkles") then
 				if math.random() <= 0.6 then
 					v:Destroy()
 				end
-			elseif (v:IsA("BasePart") or v:IsA("Model")) and not v:FindFirstChildOfClass("Humanoid") then
+			elseif v:IsA("BasePart") and not v.Anchored then
+				v.CanCollide = false
+				v.CanTouch = false
+				v.CanQuery = false
 				lingeringParts[v] = {time = tick(), obj = v}
 			end
 		end
@@ -222,114 +202,18 @@ end)
 
 RunService.Heartbeat:Connect(function()
 	pcall(function()
-		if isMuteSound then
-			SoundService.Volume = 0
-		end
+		if isMuteSound then SoundService.Volume = 0 end
 		
-		if isHide60 then
+		if isEffectClean then
 			local now = tick()
 			for obj, data in pairs(lingeringParts) do
 				if not obj or not obj.Parent then
 					lingeringParts[obj] = nil
 				else
-					-- Tự động bốc hơi cực nhanh sau 0.8 giây khi skill kết thúc / kẹt lại
 					if (now - data.time > 0.8) then
 						obj:Destroy()
 						lingeringParts[obj] = nil
 					end
-				end
-			end
-		end
-	end)
-end)
-
--- ĐẤT ẢO ĐI TRÊN NƯỚC
-local waterPart = Instance.new("Part")
-waterPart.Size = Vector3.new(14, 1, 14)
-waterPart.Anchored = true
-waterPart.Transparency = 1
-waterPart.CanCollide = false
-waterPart.Name = "MrDonWaterPlatform"
-waterPart.Parent = Workspace
-
-RunService.RenderStepped:Connect(function()
-	pcall(function()
-		if isWaterPlatform and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-			local hrp = player.Character.HumanoidRootPart
-			waterPart.CanCollide = true
-			waterPart.Position = Vector3.new(hrp.Position.X, hrp.Position.Y - 3.5, hrp.Position.Z)
-		else
-			waterPart.CanCollide = false
-			waterPart.Position = Vector3.new(0, -500, 0)
-		end
-	end)
-end)
-
--- SILENT AIM KHÓA NGƯỜI CHƠI
-local function getNearestPlayer()
-	local char = player.Character
-	if not char or not char:FindFirstChild("HumanoidRootPart") then return nil end
-	local nearest, shortest = nil, math.huge
-	for _, p in ipairs(Players:GetPlayers()) do
-		if p ~= player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") and p.Character:FindFirstChildOfClass("Humanoid") then
-			local hum = p.Character.Humanoid
-			if hum.Health > 0 then
-				local hrp = p.Character.HumanoidRootPart
-				local dist = (hrp.Position - char.HumanoidRootPart.Position).Magnitude
-				if dist < shortest then
-					shortest = dist
-					nearest = hrp
-				end
-			end
-		end
-	end
-	return nearest
-end
-
-pcall(function()
-	local mt = getrawmetatable(game)
-	if mt and mt.__namecall then
-		setreadonly(mt, false)
-		local old = mt.__namecall
-		mt.__namecall = newcclosure(function(self, ...)
-			local args = {...}
-			local method = getnamecallmethod()
-			if isSilentAim and method == "FireServer" then
-				if self.Name == "Shoot" or self.Name == "Skill" or self.Name == "Validator" or self.Name:lower():find("attack") then
-					local target = getNearestPlayer()
-					if target then
-						for i, v in ipairs(args) do
-							if typeof(v) == "Vector3" then args[i] = target.Position
-							elseif typeof(v) == "CFrame" then args[i] = CFrame.new(target.Position) end
-						end
-					end
-				end
-			end
-			return old(self, unpack(args))
-		end)
-		setreadonly(mt, true)
-	end
-end)
-
--- VÒNG LẶP SPEED, JUMP, NOCLIP
-RunService.RenderStepped:Connect(function()
-	pcall(function()
-		local char = player.Character
-		if char then
-			local hum = char:FindFirstChildOfClass("Humanoid")
-			
-			if isSpeed and hum then
-				hum.WalkSpeed = speedVal
-			end
-			
-			if isJumpBoost and hum then
-				hum.UseJumpPower = true
-				hum.JumpPower = jumpVal
-			end
-			
-			if isNoclip then
-				for _, v in ipairs(char:GetDescendants()) do
-					if v:IsA("BasePart") then v.CanCollide = false end
 				end
 			end
 		end
