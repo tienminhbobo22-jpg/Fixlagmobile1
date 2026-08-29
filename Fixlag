@@ -1,5 +1,5 @@
 --========================================================
--- MrDon PURE ANTI-LAG V97 (FULL BRIGHT & KEEP SKILLS VISIBLE)
+-- MrDon PURE ANTI-LAG V97 (40% EFFECT + GHOST SLAYER)
 --========================================================
 
 local Players = game:GetService("Players")
@@ -106,8 +106,8 @@ end
 local safeConnection = nil
 local brightConnection = nil
 
--- Toggle 1: Diệt cây & đá rác map (Bảo vệ hoàn toàn skill của bản thân và đối thủ)
-createToggle("DIỆT CÂY & ĐÁ (GIỮ SKILL 100%)", 8, function(state)
+-- Toggle 1: Diệt cây/đá rác + Giữ 40% effect + Diệt hồn ma kẹt sau 1.5s
+createToggle("DIỆT CÂY, ĐÁ & CHỐNG KẸT GHOST", 8, function(state)
 	if state then
 		local function isProtected(v)
 			if not v or not v.Parent then return true end
@@ -166,6 +166,20 @@ createToggle("DIỆT CÂY & ĐÁ (GIỮ SKILL 100%)", 8, function(state)
 				task.wait(0.1)
 				if v and v.Parent then
 					checkAndDestroy(v)
+					
+					-- 1. Lọc thưa giữ lại 40% effect lúc skill khởi tạo
+					if v:IsA("Beam") or v:IsA("Trail") or v:IsA("ParticleEmitter") then
+						if math.random(1, 100) > 40 then
+							v:Destroy()
+						else
+							-- 2. Ghost Slayer: Quét nếu sau 1.5s mà tụi nó vẫn lì lợm bám trụ kẹt lại thì cho bốc hơi luôn
+							task.delay(1.5, function()
+								if v and v.Parent and not isProtected(v) then
+									v:Destroy()
+								end
+							end)
+						end
+					end
 				end
 			end)
 		end)
@@ -177,7 +191,7 @@ createToggle("DIỆT CÂY & ĐÁ (GIỮ SKILL 100%)", 8, function(state)
 	end
 end)
 
--- Toggle 2: Full Bright (Sáng rực rỡ, nhìn rõ mọi thứ)
+-- Toggle 2: Full Bright
 createToggle("FULL BRIGHT (SÁNG RỰC RỠ)", 48, function(state)
 	if state then
 		pcall(function()
