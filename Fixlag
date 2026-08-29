@@ -1,5 +1,5 @@
 --========================================================
--- MrDon PURE ANTI-LAG V97 (FIXED SOUND & INSTANT DEBRIS)
+-- MrDon PURE ANTI-LAG V97 (FULL BRIGHT & KEEP SKILLS VISIBLE)
 --========================================================
 
 local Players = game:GetService("Players")
@@ -19,7 +19,7 @@ gui.ResetOnSpawn = false
 gui.Parent = player:WaitForChild("PlayerGui")
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 240, 0, 185)
+frame.Size = UDim2.new(0, 240, 0, 220)
 frame.Position = UDim2.new(0.5, -120, 0.15, 0)
 frame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
 frame.Active = true
@@ -71,14 +71,14 @@ local container = Instance.new("ScrollingFrame")
 container.Size = UDim2.new(1, 0, 1, -36)
 container.Position = UDim2.fromOffset(0, 36)
 container.BackgroundTransparency = 1
-container.CanvasSize = UDim2.new(0, 0, 0, 130)
+container.CanvasSize = UDim2.new(0, 0, 0, 160)
 container.ScrollBarThickness = 4
 container.Parent = frame
 
 minBtn.MouseButton1Click:Connect(function()
 	isMinimized = not isMinimized
 	container.Visible = not isMinimized
-	frame.Size = isMinimized and UDim2.new(0, 240, 0, 32) or UDim2.new(0, 240, 0, 185)
+	frame.Size = isMinimized and UDim2.new(0, 240, 0, 32) or UDim2.new(0, 240, 0, 220)
 	minBtn.Text = isMinimized and "+" or "-"
 end)
 
@@ -104,8 +104,10 @@ local function createToggle(name, yPos, callback)
 end
 
 local safeConnection = nil
+local brightConnection = nil
 
-createToggle("DIỆT CÂY, KHỐI & GIỮ TRỌN TIẾNG SKILL (V97)", 8, function(state)
+-- Toggle 1: Diệt cây & đá rác map (Bảo vệ hoàn toàn skill của bản thân và đối thủ)
+createToggle("DIỆT CÂY & ĐÁ (GIỮ SKILL 100%)", 8, function(state)
 	if state then
 		local function isProtected(v)
 			if not v or not v.Parent then return true end
@@ -145,25 +147,11 @@ createToggle("DIỆT CÂY, KHỐI & GIỮ TRỌN TIẾNG SKILL (V97)", 8, functi
 			elseif v:IsA("BasePart") then
 				local name = v.Name:lower()
 				local parentName = v.Parent and v.Parent.Name:lower() or ""
-				local model = v:FindFirstAncestorOfClass("Model")
-				local modelName = model and model.Name:lower() or ""
-				
 				local isDebris = name:find("rock") or name:find("stone") or name:find("debris") or name:find("chunk") or name:find("earth") or name:find("ground") or name:find("rubble") or name:find("shard") or parentName:find("debris") or parentName:find("rock") or parentName:find("stone")
 				
-				if isDebris or (not v.Anchored) then
+				if isDebris then
 					v:Destroy()
 				end
-			elseif v:IsA("Sound") then
-				-- Đợi âm thanh chạy hết 4 giây mới dọn dẹp để không bị cụt tiếng giữa chừng
-				task.spawn(function()
-					task.wait(4)
-					if v and v.Parent then
-						pcall(function()
-							v:Stop()
-							v:Destroy()
-						end)
-					end
-				end)
 			end
 		end
 
@@ -179,13 +167,6 @@ createToggle("DIỆT CÂY, KHỐI & GIỮ TRỌN TIẾNG SKILL (V97)", 8, functi
 				if v and v.Parent then
 					checkAndDestroy(v)
 				end
-				
-				task.wait(0.9)
-				if v and v.Parent and not isProtected(v) then
-					if v:IsA("Beam") or v:IsA("Trail") or v:IsA("ParticleEmitter") or v:IsA("Attachment") or v:IsA("Highlight") then
-						v:Destroy()
-					end
-				end
 			end)
 		end)
 	else
@@ -196,20 +177,39 @@ createToggle("DIỆT CÂY, KHỐI & GIỮ TRỌN TIẾNG SKILL (V97)", 8, functi
 	end
 end)
 
-createToggle("POTATO GRAPHICS (TẮT SẠCH BÓNG)", 48, function(state)
+-- Toggle 2: Full Bright (Sáng rực rỡ, nhìn rõ mọi thứ)
+createToggle("FULL BRIGHT (SÁNG RỰC RỠ)", 48, function(state)
+	if state then
+		pcall(function()
+			Lighting.Brightness = 2
+			Lighting.ClockTime = 14
+			Lighting.GlobalShadows = false
+			Lighting.FogEnd = 9e9
+		end)
+		brightConnection = Lighting.Changed:Connect(function()
+			Lighting.Brightness = 2
+			Lighting.ClockTime = 14
+			Lighting.GlobalShadows = false
+		end)
+	else
+		if brightConnection then
+			brightConnection:Disconnect()
+			brightConnection = nil
+		end
+		pcall(function()
+			Lighting.Brightness = 1
+			Lighting.GlobalShadows = true
+		end)
+	end
+end)
+
+-- Toggle 3: Potato Graphics
+createToggle("POTATO GRAPHICS (TẮT BÓNG & NƯỚC)", 88, function(state)
 	if state then
 		pcall(function()
 			Lighting.GlobalShadows = false
-			Lighting.FogEnd = 9e9
-			Lighting.Brightness = 1
-			for _, v in ipairs(Lighting:GetDescendants()) do
-				if v:IsA("Sky") or v:IsA("Atmosphere") or v:IsA("Clouds") or v:IsA("PostEffect") or v:IsA("SunRaysEffect") then
-					v:Destroy()
-				end
-			end
 			Workspace.Terrain.WaterWaveSize = 0
 			Workspace.Terrain.WaterWaveSpeed = 0
-			
 			for _, v in ipairs(Workspace:GetDescendants()) do
 				if v:IsA("BasePart") then
 					v.CastShadow = false
