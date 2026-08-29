@@ -1,5 +1,5 @@
 --========================================================
--- MrDon PURE ANTI-LAG V89 (0.1S DELAY & KEEP 40% SKILL FX)
+-- MrDon PURE ANTI-LAG V96 (FIXED SYNTAX)
 --========================================================
 
 local Players = game:GetService("Players")
@@ -8,13 +8,13 @@ local Lighting = game:GetService("Lighting")
 local player = Players.LocalPlayer
 
 pcall(function()
-	if player.PlayerGui:FindFirstChild("MrDonV89") then
-		player.PlayerGui.MrDonV89:Destroy()
+	if player.PlayerGui:FindFirstChild("MrDonV96") then
+		player.PlayerGui.MrDonV96:Destroy()
 	end
 end)
 
 local gui = Instance.new("ScreenGui")
-gui.Name = "MrDonV89"
+gui.Name = "MrDonV96"
 gui.ResetOnSpawn = false
 gui.Parent = player:WaitForChild("PlayerGui")
 
@@ -37,7 +37,7 @@ local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, -60, 1, 0)
 title.Position = UDim2.fromOffset(8, 0)
 title.BackgroundTransparency = 1
-title.Text = "⚡ MrDon ANTI-LAG V89"
+title.Text = "⚡ MrDon ANTI-LAG V96"
 title.TextColor3 = Color3.fromRGB(0, 255, 150)
 title.Font = Enum.Font.GothamBold
 title.TextSize = 10
@@ -106,8 +106,9 @@ end
 
 local safeConnection = nil
 
-createToggle("AUTO DIỆT ĐẤT/CÂY & TỈA 60% FX (0.1s)", 8, function(state)
+createToggle("DIỆT CÂY, KHỐI & 1S TIME-BOMB EFFECT (V96)", 8, function(state)
 	if state then
+		-- Bảo vệ tuyệt đối quái, NPC, boss, người chơi, tool, trái cây, rương
 		local function isProtected(v)
 			if not v or not v.Parent then return true end
 			if player.Character and (v == player.Character or v:IsDescendantOf(player.Character)) then
@@ -116,11 +117,20 @@ createToggle("AUTO DIỆT ĐẤT/CÂY & TỈA 60% FX (0.1s)", 8, function(state)
 			if v:IsA("Tool") or v:FindFirstAncestorOfClass("Tool") then
 				return true
 			end
+			
 			local model = v:FindFirstAncestorOfClass("Model")
 			if model then
-				if model:FindFirstChildOfClass("Humanoid") or Players:GetPlayerFromCharacter(model) then
+				if model:FindFirstChildWhichIsA("Humanoid", true) or Players:GetPlayerFromCharacter(model) then
 					return true
 				end
+			end
+			if v:FindFirstChildWhichIsA("Humanoid", true) then
+				return true
+			end
+			
+			local name = v.Name:lower()
+			if name:find("fruit") or name:find("chest") then
+				return true
 			end
 			return false
 		end
@@ -148,29 +158,42 @@ createToggle("AUTO DIỆT ĐẤT/CÂY & TỈA 60% FX (0.1s)", 8, function(state)
 				
 				local isFruitOrChest = name:find("fruit") or name:find("chest") or modelName:find("fruit") or modelName:find("chest")
 				
-				if isDebrisOrTree and not isFruitOrChest then
+				if (isDebrisOrTree or (not v.Anchored)) and not isFruitOrChest then
 					v:Destroy()
 				end
-			elseif v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Beam") then
-				-- Tỉa 60% hiệu ứng rác, giữ lại 40% cho mượt chiêu thức
-				if math.random(1, 100) <= 60 then
+			elseif v:IsA("Sound") then
+				pcall(function()
+					if v.IsPlaying and v.Looping then
+						v:Stop()
+					end
 					v:Destroy()
-				end
+				end)
 			end
 		end
 
-		-- Quét dọn toàn bộ map ngay khi bật
+		-- Quét sạch sành sanh map ngay khi bật
 		pcall(function()
 			for _, v in ipairs(Workspace:GetDescendants()) do
 				checkAndDestroy(v)
 			end
 		end)
 
-		-- Lắng nghe với thời gian chờ 0.1s chuẩn xác để tóm gọn destruction mà không lọt sổ
+		-- Lắng nghe vật thể mới sinh ra
 		safeConnection = Workspace.DescendantAdded:Connect(function(v)
 			task.spawn(function()
+				-- 1. Xóa tức thì khối đá/cây cối/part rác ngay sau 0.1s
 				task.wait(0.1)
-				checkAndDestroy(v)
+				if v and v.Parent then
+					checkAndDestroy(v)
+				end
+				
+				-- 2. Time-Bomb 1 giây tóm trọn mọi loại Effect lơ lửng kẹt lại (Beam, Trail, ParticleEmitter, v.v.)
+				task.wait(0.9)
+				if v and v.Parent and not isProtected(v) then
+					if v:IsA("Beam") or v:IsA("Trail") or v:IsA("ParticleEmitter") or v:IsA("Attachment") or v:IsA("Highlight") then
+						v:Destroy()
+					end
+				end
 			end)
 		end)
 	else
