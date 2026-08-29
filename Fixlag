@@ -1,5 +1,5 @@
 --========================================================
--- MrDon PURE ANTI-LAG V96 (FIXED SYNTAX)
+-- MrDon PURE ANTI-LAG V97 (FIXED SOUND & INSTANT DEBRIS)
 --========================================================
 
 local Players = game:GetService("Players")
@@ -8,13 +8,13 @@ local Lighting = game:GetService("Lighting")
 local player = Players.LocalPlayer
 
 pcall(function()
-	if player.PlayerGui:FindFirstChild("MrDonV96") then
-		player.PlayerGui.MrDonV96:Destroy()
+	if player.PlayerGui:FindFirstChild("MrDonV97") then
+		player.PlayerGui.MrDonV97:Destroy()
 	end
 end)
 
 local gui = Instance.new("ScreenGui")
-gui.Name = "MrDonV96"
+gui.Name = "MrDonV97"
 gui.ResetOnSpawn = false
 gui.Parent = player:WaitForChild("PlayerGui")
 
@@ -37,7 +37,7 @@ local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, -60, 1, 0)
 title.Position = UDim2.fromOffset(8, 0)
 title.BackgroundTransparency = 1
-title.Text = "⚡ MrDon ANTI-LAG V96"
+title.Text = "⚡ MrDon ANTI-LAG V97"
 title.TextColor3 = Color3.fromRGB(0, 255, 150)
 title.Font = Enum.Font.GothamBold
 title.TextSize = 10
@@ -56,7 +56,6 @@ Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 4)
 
 closeBtn.MouseButton1Click:Connect(function() gui:Destroy() end)
 
--- Nút thu gọn (-) menu
 local isMinimized = false
 local minBtn = Instance.new("TextButton")
 minBtn.Size = UDim2.fromOffset(22, 22)
@@ -106,9 +105,8 @@ end
 
 local safeConnection = nil
 
-createToggle("DIỆT CÂY, KHỐI & 1S TIME-BOMB EFFECT (V96)", 8, function(state)
+createToggle("DIỆT CÂY, KHỐI & GIỮ TRỌN TIẾNG SKILL (V97)", 8, function(state)
 	if state then
-		-- Bảo vệ tuyệt đối quái, NPC, boss, người chơi, tool, trái cây, rương
 		local function isProtected(v)
 			if not v or not v.Parent then return true end
 			if player.Character and (v == player.Character or v:IsDescendantOf(player.Character)) then
@@ -120,12 +118,12 @@ createToggle("DIỆT CÂY, KHỐI & 1S TIME-BOMB EFFECT (V96)", 8, function(stat
 			
 			local model = v:FindFirstAncestorOfClass("Model")
 			if model then
-				if model:FindFirstChildWhichIsA("Humanoid", true) or Players:GetPlayerFromCharacter(model) then
+				if Players:GetPlayerFromCharacter(model) then
 					return true
 				end
-			end
-			if v:FindFirstChildWhichIsA("Humanoid", true) then
-				return true
+				if model.Parent and (model.Parent.Name == "Enemies" or model.Parent.Name == "Characters" or model.Parent.Name == "NPCs") then
+					return true
+				end
 			end
 			
 			local name = v.Name:lower()
@@ -141,53 +139,47 @@ createToggle("DIỆT CÂY, KHỐI & 1S TIME-BOMB EFFECT (V96)", 8, function(stat
 
 			if v:IsA("Model") then
 				local mName = v.Name:lower()
-				local isTreeModel = mName:find("tree") or mName:find("wood") or mName:find("trunk") or mName:find("branch") or mName:find("leaf") or mName:find("leaves") or mName:find("stump") or mName:find("log") or mName:find("plant") or mName:find("bush") or mName:find("foliage")
-				local isFruitOrChest = mName:find("fruit") or mName:find("chest")
-				
-				if isTreeModel and not isFruitOrChest then
+				if mName:find("tree") or mName:find("wood") or mName:find("trunk") or mName:find("branch") or mName:find("leaf") or mName:find("leaves") or mName:find("stump") or mName:find("log") or mName:find("plant") or mName:find("bush") or mName:find("foliage") then
 					v:Destroy()
-					return
 				end
 			elseif v:IsA("BasePart") then
 				local name = v.Name:lower()
 				local parentName = v.Parent and v.Parent.Name:lower() or ""
-				local ancestorModel = v:FindFirstAncestorOfClass("Model")
-				local modelName = ancestorModel and ancestorModel.Name:lower() or ""
+				local model = v:FindFirstAncestorOfClass("Model")
+				local modelName = model and model.Name:lower() or ""
 				
-				local isDebrisOrTree = name:find("rock") or name:find("stone") or name:find("debris") or name:find("chunk") or name:find("earth") or name:find("ground") or name:find("rubble") or name:find("shard") or name:find("tree") or name:find("wood") or name:find("trunk") or name:find("branch") or name:find("leaf") or name:find("leaves") or name:find("stump") or name:find("log") or name:find("plant") or name:find("bush") or parentName:find("debris") or parentName:find("rock") or parentName:find("stone") or parentName:find("tree") or modelName:find("tree") or modelName:find("wood")
+				local isDebris = name:find("rock") or name:find("stone") or name:find("debris") or name:find("chunk") or name:find("earth") or name:find("ground") or name:find("rubble") or name:find("shard") or parentName:find("debris") or parentName:find("rock") or parentName:find("stone")
 				
-				local isFruitOrChest = name:find("fruit") or name:find("chest") or modelName:find("fruit") or modelName:find("chest")
-				
-				if (isDebrisOrTree or (not v.Anchored)) and not isFruitOrChest then
+				if isDebris or (not v.Anchored) then
 					v:Destroy()
 				end
 			elseif v:IsA("Sound") then
-				pcall(function()
-					if v.IsPlaying and v.Looping then
-						v:Stop()
+				-- Đợi âm thanh chạy hết 4 giây mới dọn dẹp để không bị cụt tiếng giữa chừng
+				task.spawn(function()
+					task.wait(4)
+					if v and v.Parent then
+						pcall(function()
+							v:Stop()
+							v:Destroy()
+						end)
 					end
-					v:Destroy()
 				end)
 			end
 		end
 
-		-- Quét sạch sành sanh map ngay khi bật
 		pcall(function()
 			for _, v in ipairs(Workspace:GetDescendants()) do
 				checkAndDestroy(v)
 			end
 		end)
 
-		-- Lắng nghe vật thể mới sinh ra
 		safeConnection = Workspace.DescendantAdded:Connect(function(v)
 			task.spawn(function()
-				-- 1. Xóa tức thì khối đá/cây cối/part rác ngay sau 0.1s
 				task.wait(0.1)
 				if v and v.Parent then
 					checkAndDestroy(v)
 				end
 				
-				-- 2. Time-Bomb 1 giây tóm trọn mọi loại Effect lơ lửng kẹt lại (Beam, Trail, ParticleEmitter, v.v.)
 				task.wait(0.9)
 				if v and v.Parent and not isProtected(v) then
 					if v:IsA("Beam") or v:IsA("Trail") or v:IsA("ParticleEmitter") or v:IsA("Attachment") or v:IsA("Highlight") then
